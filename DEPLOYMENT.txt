@@ -1,0 +1,227 @@
+===============================================================================
+               EXPENSE TRACKER — DEPLOYMENT GUIDE
+===============================================================================
+
+Overview
+--------
+                        /api/*
+  Vercel  ───────────────────────►  Render  ──────►  MongoDB Atlas
+  (React SPA)                       (Express API)     (M0 free cluster)
+
+  https://<name>.vercel.app         https://<name>.onrender.com
+
+
+================================================================================
+Step 0 — Prerequisites
+================================================================================
+
+  Account          Free Tier    URL
+  ───────────────  ──────────   ──────────────────────────────────────
+  GitHub           Yes          https://github.com
+  MongoDB Atlas    M0 (512 MB)  https://cloud.mongodb.com
+  Render           Free tier    https://dashboard.render.com
+  Vercel           Hobby        https://vercel.com
+
+Push the project to a GitHub repo first (all files except node_modules/ and dist/).
+
+
+================================================================================
+Step 1 — MongoDB Atlas
+================================================================================
+
+  1. Create a free M0 cluster (choose AWS, closest region to your users).
+
+  2. Under "Database Access", create a database user:
+       - Username: expense-app  (or anything you like)
+       - Password: generate a strong password and note it down
+
+  3. Under "Network Access", click "Add IP Address":
+       - Choose "Allow Access from Anywhere"
+       - This adds 0.0.0.0/0
+       - Required because Render uses dynamic IPs
+
+  4. Go to "Database" → "Connect" → "Drivers" and copy the connection string.
+     It looks like this:
+
+       mongodb+srv://expense-app:<password>@cluster0.xxxxx.mongodb.net/expense_tracker?retryWrites=true&w=majority
+
+  5. Replace <password> with your actual database user password.
+     This is your MONGODB_URI — save it somewhere safe.
+
+
+================================================================================
+Step 2 — Deploy Backend to Render
+================================================================================
+
+  1. Go to https://dashboard.render.com → "New" → "Web Service"
+
+  2. Connect your GitHub repo
+
+  3. Fill in these fields:
+
+       Name:            expense-tracker-api
+       Runtime:         Node
+       Root Directory:  server
+       Build Command:   npm install
+       Start Command:   node server.js
+       Instance Type:   Free
+
+  4. Click "Advanced" → "Add Env Variables" and add:
+
+       MONGODB_URI    = <your Atlas connection string from Step 1>
+       JWT_SECRET     = <any long random string>
+
+       To generate a random secret, run this locally:
+         openssl rand -hex 32
+
+       Leave these blank for now (optional, for Gmail import later):
+       APP_ORIGIN     = (leave blank)
+       SERVER_ORIGIN  = (leave blank)
+       GMAIL_CLIENT_ID     = (leave blank)
+       GMAIL_CLIENT_SECRET = (leave blank)
+
+  5. Click "Create Web Service"
+
+  6. Wait for the deploy to finish. You'll get a URL like:
+
+       https://expense-tracker-api.onrender.com
+
+  7. Verify it works — open this URL in your browser:
+
+       https://expense-tracker-api.onrender.com/api/health
+
+     You should see:
+
+       {"status":"ok"}
+
+  8. Go back to Render → your service → "Environment" tab and set:
+
+       APP_ORIGIN    = (your Vercel URL — fill in after Step 3)
+       SERVER_ORIGIN = https://expense-tracker-api.onrender.com
+
+     The service auto-redeploys when env vars change.
+
+
+================================================================================
+Step 3 — Deploy Frontend to Vercel
+================================================================================
+
+  Your frontend API base is "/api" (relative path), which works in dev via
+  Vite's proxy. In production on Vercel, you need a rewrite to forward
+  /api/* requests to your Render backend.
+
+  BEFORE deploying, create this file at the repo root:
+
+  -----  vercel.json  (create this file in the project root)  -----
+
+  {
+    "rewrites": [
+      {
+        "source": "/api/:path*",
+        "destination": "https://expense-tracker-api.onrender.com/api/:path*"
+      }
+    ]
+  }
+
+  -----  end  -----
+
+  Replace expense-tracker-api.onrender.com with your actual Render URL.
+
+  Then deploy:
+
+  1. Go to https://vercel.com → "New Project" → Import your GitHub repo
+
+  2. Vercel auto-detects Vite. Fill in:
+
+       Framework Preset:  Vite
+       Root Directory:    ./  (repo root)
+       Build Command:     npm run build
+       Output Directory:  dist
+       Install Command:   npm install
+
+  3. No env vars needed — the API base is /api, proxied via vercel.json
+
+  4. Click "Deploy". Wait for it to finish. You'll get a URL like:
+
+       https://expense-tracker-xxxxx.vercel.app
+
+  5. Open it → register a new account → you should see the full dashboard
+
+
+================================================================================
+Step 4 — Wire Up the Final Env Vars
+================================================================================
+
+  Go back to Render → your service → "Environment" tab and set:
+
+       APP_ORIGIN = https://expense-tracker-xxxxx.vercel.app
+
+  Replace with your actual Vercel URL.
+
+  This is used by the Gmail import callback redirect.
+  Without it, the email import feature still works but
+  redirects back to localhost after the Google OAuth flow.
+
+
+================================================================================
+Step 5 — (Optional) Seed Demo Data
+================================================================================
+
+  After the backend is live, seed the demo account on your machine:
+
+    cd server
+    npm install
+    MONGODB_URI="mongodb+srv://<user>:<pass>@cluster.mongodb.net/expense_tracker?retryWrites=true&w=majority" node seed/seed.js
+
+  Or seed into your own existing account:
+
+    MONGODB_URI="..." node seed/seed.js your@email.com
+
+  Then log in on the Vercel deployment with:
+
+       Email:    sample@expense.demo
+       Password: demo123
+
+  To remove all demo data later:
+
+    npm run unseed
+
+
+================================================================================
+Notes
+================================================================================
+
+  Cold start
+  ----------
+  Render free tier spins down after 15 minutes of inactivity.
+  The first request after sleep takes 30-60 seconds.
+  This is expected on the free tier.
+
+  CORS
+  ----
+  Already configured permissively (app.use(cors())).
+  No changes needed for Vercel ↔ Render communication.
+
+  PWA
+  ---
+  Works on Vercel out of the box.
+  The service worker (sw.js) is generated in dist/ and served
+  automatically by Vercel's static hosting.
+
+  Gmail Import (optional)
+  -----------------------
+  To enable later:
+    1. Set GMAIL_CLIENT_ID and GMAIL_CLIENT_SECRET in Render env vars
+    2. In Google Cloud Console, add this as an Authorized Redirect URI:
+         https://expense-tracker-api.onrender.com/api/email/callback
+    3. Redeploy
+
+  Seed / Unseed
+  -------------
+  Run "npm run unseed" then "npm run seed" to refresh demo data
+  after any schema change.
+
+  Server .env (not for Render)
+  ----------------------------
+  For local development, server/.env is used. It is gitignored.
+  Never commit secrets to the repo.
