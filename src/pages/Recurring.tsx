@@ -5,6 +5,7 @@ import { useCategories } from "../hooks/useCategories";
 import Modal from "../components/Modal";
 import Tilt from "../components/Tilt";
 import { formatMoney, formatDate, todayInput } from "../lib/format";
+import { iconLabel } from "../lib/icons";
 import type { RecurringExpense } from "../types";
 import {
   Plus,
@@ -138,7 +139,7 @@ function RecurringForm({
             {filteredCats.length === 0 && <option value="">No categories</option>}
             {filteredCats.map((c) => (
               <option key={c._id} value={c._id}>
-                {c.icon} {c.name}
+                {iconLabel(c.icon)}{c.name}
               </option>
             ))}
           </select>

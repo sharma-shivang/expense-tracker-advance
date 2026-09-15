@@ -2,6 +2,7 @@ import { useState, useRef, type FormEvent } from "react";
 import { Plus } from "lucide-react";
 import type { Category, Expense, Account } from "../types";
 import { todayInput } from "../lib/format";
+import { iconLabel } from "../lib/icons";
 import { parseQuickAdd } from "../lib/quickadd";
 
 interface Props {
@@ -199,7 +200,7 @@ export default function ExpenseForm({
             {filteredCats.length === 0 && <option value="">No categories</option>}
             {filteredCats.map((c) => (
               <option key={c._id} value={c._id}>
-                {c.icon} {c.name}
+                {iconLabel(c.icon)}{c.name}
               </option>
             ))}
           </select>
@@ -213,7 +214,7 @@ export default function ExpenseForm({
             <option value="">None</option>
             {accounts.map((a) => (
               <option key={a._id} value={a._id}>
-                {a.icon} {a.name}
+                {iconLabel(a.icon)}{a.name}
               </option>
             ))}
           </select>

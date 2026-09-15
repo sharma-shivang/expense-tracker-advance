@@ -18,6 +18,7 @@ import { useAuth } from "../context/AuthContext";
 import Tilt from "../components/Tilt";
 import AnimatedNumber from "../components/AnimatedNumber";
 import { formatMoney, formatDate, currentMonth, monthLabel } from "../lib/format";
+import { EntityIcon } from "../lib/icons";
 import type { Expense, Budget, Bill, Goal } from "../types";
 import {
   RotateCcw,
@@ -512,7 +513,8 @@ return (
                               className="cat-pill"
                               style={{ background: `${cat.color}20`, color: cat.color }}
                             >
-                              {cat.icon} {cat.name}
+                              <EntityIcon icon={cat.icon} />
+                              {cat.name}
                             </span>
                           )}
                         </td>

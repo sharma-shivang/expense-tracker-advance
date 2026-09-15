@@ -6,6 +6,7 @@ import { useCategories } from "../hooks/useCategories";
 import Modal from "../components/Modal";
 import MobilitySettings from "../components/MobilitySettings";
 import { formatMoney, formatDate } from "../lib/format";
+import { EntityIcon, iconLabel, ICON_OPTIONS, EMOJI_OPTIONS } from "../lib/icons";
 import type { Category } from "../types";
 import {
   Plus,
@@ -97,7 +98,7 @@ function CategoryManager() {
                     className="cat-pill"
                     style={{ background: `${c.color}20`, color: c.color }}
                   >
-                    {c.icon && <Tag className="lucide-icon inline" style={{ marginRight: 4 }} />}{c.name}
+                    {c.icon && <EntityIcon icon={c.icon} />}{c.name}
                   </span>
                 </td>
                 <td data-label="Type">
@@ -136,23 +137,47 @@ function CategoryManager() {
                 required
               />
             </div>
-            <div className="form-row">
-              <div className="form-group">
-                <label>Type</label>
-                <select value={type} onChange={(e) => setType(e.target.value as any)}>
-                  <option value="expense">Expense</option>
-                  <option value="income">Income</option>
-                </select>
+            <div className="form-group">
+              <label>Type</label>
+              <select value={type} onChange={(e) => setType(e.target.value as any)}>
+                <option value="expense">Expense</option>
+                <option value="income">Income</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Icon</label>
+              <div className="icon-picker">
+                {EMOJI_OPTIONS.map((e) => (
+                  <button
+                    key={`e-${e}`}
+                    type="button"
+                    className={`icon-option${icon === e ? " selected" : ""}`}
+                    title={e}
+                    aria-pressed={icon === e}
+                    onClick={() => setIcon(e)}
+                  >
+                    {e}
+                  </button>
+                ))}
+                {ICON_OPTIONS.map((opt) => {
+                  const IconComp = opt.icon;
+                  return (
+                    <button
+                      key={opt.name}
+                      type="button"
+                      className={`icon-option${icon === opt.name ? " selected" : ""}`}
+                      title={opt.name}
+                      aria-pressed={icon === opt.name}
+                      onClick={() => setIcon(opt.name)}
+                    >
+                      <IconComp className="lucide-icon" />
+                    </button>
+                  );
+                })}
               </div>
-              <div className="form-group">
-                <label>Icon (Lucide name)</label>
-                <input
-                  value={icon}
-                  onChange={(e) => setIcon(e.target.value)}
-                  placeholder="ShoppingCart"
-                  maxLength={32}
-                />
-              </div>
+              <small style={{ color: "var(--text-muted)" }}>
+                Picked icon is shown next to the category name everywhere.
+              </small>
             </div>
             <div className="form-group">
               <label>Color</label>
@@ -419,7 +444,7 @@ function StatementImporter() {
             <option value="">Account: None</option>
             {accounts.map((a) => (
               <option key={a._id} value={a._id}>
-                {a.icon} {a.name}
+                {iconLabel(a.icon)}{a.name}
               </option>
             ))}
           </select>

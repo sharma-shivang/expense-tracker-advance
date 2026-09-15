@@ -7,6 +7,7 @@ import ExpenseForm from "../components/ExpenseForm";
 import Modal from "../components/Modal";
 import { formatMoney, formatDate } from "../lib/format";
 import { expensesToCSV, downloadCSV } from "../lib/csv";
+import { EntityIcon, iconLabel } from "../lib/icons";
 import type { Expense, Account } from "../types";
 import {
   Download,
@@ -192,7 +193,7 @@ export default function Expenses() {
           <option value="">All categories</option>
           {categories.map((c) => (
             <option key={c._id} value={c._id}>
-              {c.icon} {c.name}
+              {iconLabel(c.icon)}{c.name}
             </option>
           ))}
         </select>
@@ -201,7 +202,7 @@ export default function Expenses() {
             <option value="">All accounts</option>
             {accounts.map((a) => (
               <option key={a._id} value={a._id}>
-                {a.icon} {a.name}
+                {iconLabel(a.icon)}{a.name}
               </option>
             ))}
           </select>
@@ -266,7 +267,8 @@ export default function Expenses() {
                           className="cat-pill"
                           style={{ background: `${cat.color}20`, color: cat.color }}
                         >
-                          {cat.icon} {cat.name}
+                          <EntityIcon icon={cat.icon} />
+                          {cat.name}
                         </span>
                       )}
                     </td>
@@ -276,7 +278,8 @@ export default function Expenses() {
                     <td data-label="Account">
                       {exp.account && typeof exp.account === "object" && (
                         <span className="cat-pill" style={{ background: "var(--bg-elev)", color: "var(--text)" }}>
-                          {exp.account.icon} {exp.account.name}
+                          <EntityIcon icon={exp.account.icon} />
+                          {exp.account.name}
                         </span>
                       )}
                     </td>

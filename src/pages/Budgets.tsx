@@ -5,6 +5,7 @@ import { useCategories } from "../hooks/useCategories";
 import Modal from "../components/Modal";
 import Tilt from "../components/Tilt";
 import { formatMoney, currentMonth, monthLabel, monthOptions } from "../lib/format";
+import { iconLabel } from "../lib/icons";
 import type { Budget } from "../types";
 import {
   Plus,
@@ -55,7 +56,7 @@ function BudgetForm({
             .filter((c) => c.type === "expense")
             .map((c) => (
               <option key={c._id} value={c._id}>
-                {c.icon} {c.name}
+                {iconLabel(c.icon)}{c.name}
               </option>
             ))}
         </select>
