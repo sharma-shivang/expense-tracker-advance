@@ -118,9 +118,15 @@ router.post(
       if (imported) seen.add(m.id);
     }
 
-    link.syncedMessageIds = Array.from(seen).slice(-2000);
-    link.lastSyncedAt = new Date();
-    await link.save();
+    await EmailLink.updateOne(
+      { _id: link._id },
+      {
+        $set: {
+          syncedMessageIds: Array.from(seen).slice(-2000),
+          lastSyncedAt: new Date(),
+        },
+      }
+    );
 
     res.json({ added, skipped, errors, total: messages.length });
   })
